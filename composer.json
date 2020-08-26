@@ -1,0 +1,21 @@
+{
+    "name": "sapiet/processor",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Xavier QUIÈVRE",
+            "email": "xavier.quievre@gmail.com"
+        }
+    ],
+    "require": {
+      "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sapiet\\Processor\\" : "src"
+        }
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^5.1"
+    }
+}
