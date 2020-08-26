@@ -31,6 +31,7 @@ use Sapiet\Processor\Storage\FileStorage;
 $processor = (new Processor())
     ->withProcess(function (bool $fail, int $sleep = 1) {
         sleep($sleep);
+
         if (true === $fail) {
             throw new \Exception('failed!');
         }
@@ -38,10 +39,10 @@ $processor = (new Processor())
     ->withStorage(new FileStorage('processor.txt'))
     ->withOption(Processor::ERROR_CALLBACK_DELAY_OPTION, 4)
     ->onSuccess(function() {
-        dump('Yeah!');
+        echo 'Yeah!'.PHP_EOL;
     })
     ->onError(function (\Exception $exception) {
-        dump(sprintf('Oh noooo (%s)', $exception->getMessage()));
+        echo sprintf('Oh noooo (%s)', $exception->getMessage()).PHP_EOL;
     })
 ;
 
@@ -60,9 +61,9 @@ foreach ($values as $value) {
 Ouput:
 
 ```
-"Oh noooo (failed!)"
-"Oh noooo (failed!)"
-"Oh noooo (failed!)"
-"Yeah!"
+Oh noooo (failed!)
+Oh noooo (failed!)
+Oh noooo (failed!)
+Yeah!
 
 ```
