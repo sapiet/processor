@@ -29,6 +29,9 @@ class Processor
     /** @var callable */
     private $successCallback;
 
+    /** @var callable */
+    private $processedCallback;
+
     /** @var array */
     private $options = [];
 
@@ -99,6 +102,19 @@ class Processor
     private function setSuccessCallback(callable $successCallback): self
     {
         $this->successCallback = $successCallback;
+
+        return $this;
+    }
+
+    /**
+     * Processed callback setter
+     *
+     * @param callable $processedCallback
+     * @return Processor
+     */
+    private function setProcessedCallback(callable $processedCallback): self
+    {
+        $this->processedCallback = $processedCallback;
 
         return $this;
     }
@@ -182,7 +198,7 @@ class Processor
     }
 
     /**
-     * Error callback setter
+     * Define an Error callback
      *
      * @param callable $errorCallback
      * @return Processor
@@ -193,7 +209,7 @@ class Processor
     }
 
     /**
-     * Success callback setter
+     * Define a success callback
      *
      * @param callable $successCallback
      * @return Processor
@@ -201,6 +217,17 @@ class Processor
     public function onSuccess(callable $successCallback): self
     {
         return $this->clone()->setSuccessCallback($successCallback);
+    }
+
+    /**
+     * Define a processed callback
+     *
+     * @param callable $processedCallback
+     * @return Processor
+     */
+    public function onProcessed(callable $processedCallback): self
+    {
+        return $this->clone()->setProcessedCallback($processedCallback);
     }
 
     /**
@@ -232,6 +259,8 @@ class Processor
         } else {
             $this->processCallbackError($resolved->getBag());
         }
+
+        $this->processCallback($this->processedCallback, $resolved->getBag());
 
         return $this;
     }
