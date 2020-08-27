@@ -3,6 +3,7 @@
 namespace Sapiet\Processor;
 
 use Sapiet\Processor\Exception\UnrecognizedOptionException;
+use Sapiet\Processor\Resolvers\ResolverInterface;
 use Sapiet\Processor\Storage\StorageInterface;
 
 class Processor
@@ -15,6 +16,9 @@ class Processor
 
     /** @var callable */
     private $process;
+
+    /** @var ResolverInterface */
+    private $resolver;
 
     /** @var StorageInterface */
     private $storage;
@@ -56,6 +60,19 @@ class Processor
     private function setStorage(StorageInterface $storage): self
     {
         $this->storage = $storage;
+
+        return $this;
+    }
+
+    /**
+     * Resolver setter
+     *
+     * @param ResolverInterface $resolver
+     * @return Processor
+     */
+    public function setResolver(ResolverInterface $resolver): self
+    {
+        $this->resolver = $resolver;
 
         return $this;
     }
@@ -143,6 +160,17 @@ class Processor
     }
 
     /**
+     * Define a resolver
+     *
+     * @param ResolverInterface $resolver
+     * @return Processor
+     */
+    public function withResolver(ResolverInterface $resolver): self
+    {
+        return $this->clone()->setResolver($resolver);
+    }
+
+    /**
      * Define a storage
      *
      * @param StorageInterface $storage
@@ -197,11 +225,12 @@ class Processor
      */
     public function process(...$args): self
     {
-        try {
-            call_user_func_array($this->process, $args);
-            $this->processCallbackSuccess();
-        } catch (\Exception $exception) {
-            $this->processCallbackError($exception);
+        $resolved = $this->resolver->resolve($this->process, $args);
+
+        if (true === $resolved->getState()) {
+            $this->processCallbackSuccess($resolved->getBag());
+        } else {
+            $this->processCallbackError($resolved->getBag());
         }
 
         return $this;
@@ -209,11 +238,13 @@ class Processor
 
     /**
      * Handle success
+     * @param array $bag
+     * @throws \Exception
      */
-    private function processCallbackSuccess()
+    private function processCallbackSuccess(array $bag)
     {
         if ($this->storage->isInError()) {
-            ($this->successCallback)();
+            $this->processCallback($this->successCallback, $bag);
             $this->storage->setIsInError(false, new \DateTimeImmutable());
         }
     }
@@ -221,10 +252,10 @@ class Processor
     /**
      * Handle error
      *
-     * @param \Exception $exception
+     * @param array $bag
      * @throws \Exception
      */
-    private function processCallbackError(\Exception $exception)
+    private function processCallbackError(array $bag)
     {
         $now = new \DateTimeImmutable();
         $time = $this->storage->getTime();
@@ -237,8 +268,19 @@ class Processor
             );
 
         if ($processCallback) {
-            ($this->errorCallback)($exception);
+            $this->processCallback($this->errorCallback, $bag);
             $this->storage->setIsInError(true, $now);
+        }
+    }
+
+    /**
+     * @param callable|null $callback
+     * @param array $bag
+     */
+    private function processCallback(?callable $callback, array $bag): void
+    {
+        if (null !== $callback) {
+            $callback($bag);
         }
     }
 }

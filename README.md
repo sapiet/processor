@@ -26,30 +26,32 @@ In this example, the last call is executed without throwing an exception, so the
 require 'vendor/autoload.php';
 
 use Sapiet\Processor\Processor;
+use Sapiet\Processor\Resolvers\ExceptionResolver;
 use Sapiet\Processor\Storage\FileStorage;
 
 $processor = (new Processor())
-    ->withProcess(function (bool $fail, int $sleep = 1) {
+    ->withProcess(function (bool $success, int $sleep = 1) {
         sleep($sleep);
 
-        if (true === $fail) {
-            throw new \Exception('failed!');
+        if (false === $success) {
+            throw new \Exception('Failed!');
         }
     })
+    ->withResolver(new ExceptionResolver())
     ->withStorage(new FileStorage('processor.txt'))
     ->withOption(Processor::ERROR_CALLBACK_DELAY_OPTION, 4)
     ->onSuccess(function() {
         echo 'Yeah!'.PHP_EOL;
     })
-    ->onError(function (\Exception $exception) {
-        echo sprintf('Oh noooo (%s)', $exception->getMessage()).PHP_EOL;
+    ->onError(function (array $bag) {
+        echo sprintf('Oh noooo (%s)', $bag['exception']->getMessage()).PHP_EOL;
     })
 ;
 
 $values = array_merge(
-    [false],
-    array_fill(0, 10, true),
-    [false]
+    [true],
+    array_fill(0, 10, false),
+    [true]
 );
 
 foreach ($values as $value) {
@@ -67,3 +69,10 @@ Oh noooo (failed!)
 Yeah!
 
 ```
+
+You can also use the `BooleanResolver` or simply create yours if your script has a different behavior
+by implementing the ResolverInterface and extending the BaseResolver
+
+There is only one available storage class, `FileStorage`, but you can easily create yours
+by implementing StorageInterface
+                                                                                                                          
