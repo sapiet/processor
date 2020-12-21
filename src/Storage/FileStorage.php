@@ -21,6 +21,20 @@ class FileStorage implements StorageInterface
      */
     private function set(array $content): void
     {
+        $dirname = dirname($this->path);
+
+        if (false === is_dir($dirname)) {
+            throw new \Exception(sprintf('Path "%s" is not a directory.', $dirname));
+        }
+
+        if (false === is_writable($dirname)) {
+            throw new \Exception(sprintf('Directory "%s" is not writable.', $dirname));
+        }
+
+        if (true === file_exists($this->path) && false === is_writable($this->path)) {
+            throw new \Exception(sprintf('File "%s" is not writable.', $this->path));
+        }
+
         $result = file_put_contents($this->path, json_encode($content));
 
         if (false === $result) {
@@ -31,10 +45,15 @@ class FileStorage implements StorageInterface
     /**
      * @param string|null $field
      * @return mixed
+     * @throws \Exception
      */
     private function get(string $field = null)
     {
         if (true === file_exists($this->path)) {
+            if (false === is_readable($this->path)) {
+                throw new \Exception(sprintf('File "%s" is not readable.', $this->path));
+            }
+
             $data = json_decode(file_get_contents($this->path), true);
 
             if (null !== $field) {
@@ -49,6 +68,7 @@ class FileStorage implements StorageInterface
 
     /**
      * @return bool
+     * @throws \Exception
      */
     public function isInError(): bool
     {
@@ -68,6 +88,7 @@ class FileStorage implements StorageInterface
 
     /**
      * @return int|null
+     * @throws \Exception
      */
     public function getTime(): ?int
     {
